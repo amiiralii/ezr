@@ -456,6 +456,19 @@ def _faraway(i:data, r1:row, region:rows) -> row:
   return neighbors(i,r1, region)[farEnough]
 
 #--------- --------- --------- --------- --------- --------- --------- --------- --------
+# ## Regression
+def closestLeaf(node,lvl=0, test = [], data1=[]):
+    "Find the leaf that is most similar to thed common row"
+    if not node.left and not node.right:
+      distance = sum(dists(data1,k,test) for k in node.here.rows)
+      leafRows = node.here.rows
+      return leafRows, distance
+    if node.left: leftLeafRows, leftDistance = closestLeaf(node.left,lvl+1, test, data1)
+    if node.right: rightLeafRows, rightDistance = closestLeaf(node.right,lvl+1, test, data1)
+
+    return (leftLeafRows, leftDistance) if (leftDistance < rightDistance) else (rightLeafRows,rightDistance)
+
+#--------- --------- --------- --------- --------- --------- --------- --------- --------
 # ## Likelihoods
 
 def loglikes(i:data, r:row|dict, nall:int, nh:int) -> float:
@@ -835,6 +848,17 @@ class eg:
     d = dendogram(data1)
     showDendo(d)
     print(mids(where(data1,d,row)))
+
+  def regression():
+    "Regression prediction"
+    data1 = DATA(csv(the.train))
+    random.shuffle(data1.rows)
+    trainSize = round(len(data1.rows)*0.7)
+    train1, test1 = data1.rows[:trainSize], data1.rows[trainSize:]
+    data1.rows[trainSize:] = []
+    d = dendogram(data1)
+    print(closestLeaf(d, 0, test1[0], data1))
+
 
   def smo():
     "Optimize something."
