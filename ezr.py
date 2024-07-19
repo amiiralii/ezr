@@ -460,12 +460,9 @@ def _faraway(i:data, r1:row, region:rows) -> row:
 def closestLeaf(node,lvl=0, test = [], data1=[]):
     "Find the leaf that is most similar to thed common row"
     if not node.left and not node.right:
-      distance = sum(dists(data1,k,test) for k in node.here.rows)
-      leafRows = node.here.rows
-      return leafRows, distance
+      return node.here.rows, sum(dists(data1,k,test) for k in node.here.rows)
     if node.left: leftLeafRows, leftDistance = closestLeaf(node.left,lvl+1, test, data1)
     if node.right: rightLeafRows, rightDistance = closestLeaf(node.right,lvl+1, test, data1)
-
     return (leftLeafRows, leftDistance) if (leftDistance < rightDistance) else (rightLeafRows,rightDistance)
 
 #--------- --------- --------- --------- --------- --------- --------- --------- --------
@@ -856,9 +853,9 @@ class eg:
     trainSize = round(len(data1.rows)*0.7)
     train1, test1 = data1.rows[:trainSize], data1.rows[trainSize:]
     data1.rows[trainSize:] = []
-    d = dendogram(data1)
-    print(closestLeaf(d, 0, test1[0], data1))
-
+    bestCluster, _ = closestLeaf(dendogram(data1), 0, test1[0], data1)
+    print(bestCluster)
+    
 
   def smo():
     "Optimize something."
