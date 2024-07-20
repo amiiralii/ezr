@@ -458,12 +458,30 @@ def _faraway(i:data, r1:row, region:rows) -> row:
 #--------- --------- --------- --------- --------- --------- --------- --------- --------
 # ## Regression
 def closestLeaf(node,lvl=0, test = [], data1=[]):
-    "Find the leaf that is most similar to thed common row"
-    if not node.left and not node.right:
-      return node.here.rows, sum(dists(data1,k,test) for k in node.here.rows)
-    if node.left: leftLeafRows, leftDistance = closestLeaf(node.left,lvl+1, test, data1)
-    if node.right: rightLeafRows, rightDistance = closestLeaf(node.right,lvl+1, test, data1)
-    return (leftLeafRows, leftDistance) if (leftDistance < rightDistance) else (rightLeafRows,rightDistance)
+  "Find the leaf that is most similar to thed common row"
+  if not node.left and not node.right:
+    return node.here.rows, sum(dists(data1,k,test) for k in node.here.rows)
+  if node.left: leftLeafRows, leftDistance = closestLeaf(node.left,lvl+1, test, data1)
+  if node.right: rightLeafRows, rightDistance = closestLeaf(node.right,lvl+1, test, data1)
+  return (leftLeafRows, leftDistance) if (leftDistance < rightDistance) else (rightLeafRows,rightDistance)
+
+def predict(test1:row, neighbors:rows, data1):
+  coefs = []
+  coefs.append([(1/(1E-30+dists(data1,n,test1))) for n in neighbors])
+  
+  preds = []
+  for yCol in data1.cols.y:
+    a = 0
+    for c, n in zip(coefs[0], neighbors):
+      a += n[yCol.at] * c
+    a /= sum(coefs[0])
+    preds.append(a)
+  
+  
+  print("Actual Ys\t",[test1[yCol.at] for yCol in data1.cols.y])
+  print("Predicted Ys\t",preds)
+  
+  return []
 
 #--------- --------- --------- --------- --------- --------- --------- --------- --------
 # ## Likelihoods
@@ -854,7 +872,8 @@ class eg:
     train1, test1 = data1.rows[:trainSize], data1.rows[trainSize:]
     data1.rows[trainSize:] = []
     bestCluster, _ = closestLeaf(dendogram(data1), 0, test1[0], data1)
-    print(bestCluster)
+    print("For the First row of Test:") 
+    predict(test1[0], bestCluster, data1)
     
 
   def smo():
