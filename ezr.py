@@ -465,23 +465,27 @@ def closestLeaf(node,lvl=0, test = [], data1=[]):
   if node.right: rightLeafRows, rightDistance = closestLeaf(node.right,lvl+1, test, data1)
   return (leftLeafRows, leftDistance) if (leftDistance < rightDistance) else (rightLeafRows,rightDistance)
 
-def predict(test1:row, neighbors:rows, data1):
-  coefs = []
-  coefs.append([(1/(1E-30+dists(data1,n,test1))) for n in neighbors])
-  
+def predict(test1:rows, data1):
   preds = []
-  for yCol in data1.cols.y:
-    a = 0
-    for c, n in zip(coefs[0], neighbors):
-      a += n[yCol.at] * c
-    a /= sum(coefs[0])
-    preds.append(a)
+  for testRow in test1:
+    coefs = []
+    neighbors = closestLeaf(dendogram(data1), 0, testRow, data1)[0]
+    coefs.append([(1/(1E-30+dists(data1,n,testRow))) for n in neighbors])
+    
+    rowPreds = []
+    for yCol in data1.cols.y:
+      pred = 0
+      for c, n in zip(coefs[0], neighbors):
+        pred += n[yCol.at] * c
+      pred /= sum(coefs[0])
+      rowPreds.append(round(pred,1))
+    preds.append(rowPreds)
   
-  
-  print("Actual Ys\t",[test1[yCol.at] for yCol in data1.cols.y])
-  print("Predicted Ys\t",preds)
-  
-  return []
+  return preds
+
+def smape(acts:rows, preds:rows):
+  return round( sum( [ ( abs(predicted - actual) / ((abs(predicted) + abs(actual))/2) ) 
+              for actual,predicted in zip(acts, preds) ] ) / len(acts) , 3)
 
 #--------- --------- --------- --------- --------- --------- --------- --------- --------
 # ## Likelihoods
@@ -869,12 +873,11 @@ class eg:
     data1 = DATA(csv(the.train))
     random.shuffle(data1.rows)
     trainSize = round(len(data1.rows)*0.7)
-    train1, test1 = data1.rows[:trainSize], data1.rows[trainSize:]
+    test1 = data1.rows[trainSize:]
     data1.rows[trainSize:] = []
-    bestCluster, _ = closestLeaf(dendogram(data1), 0, test1[0], data1)
-    print("For the First row of Test:") 
-    predict(test1[0], bestCluster, data1)
-    
+    for yCol in data1.cols.y:
+      print(f"SMAPE Error for {yCol.txt}:")
+      print(smape([r[yCol.at-data1.cols.y[0].at] for r in predict(test1, data1)], [t[yCol.at] for t in test1]))
 
   def smo():
     "Optimize something."
