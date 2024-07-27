@@ -22,7 +22,7 @@
       -p --p       distance function coefficient  = 2    
       -R --Run     start up action method         = help    
       -s --seed    random number seed             = 1234567891    
-      -t --train   training data                  = data/misc/auto93.csv    
+      -t --train   training data                  = data/misc/auto93.csv
       -T --test    test data (defaults to train)  = None  
       -v --version show version                   = False   
       -x --xys     max #bins in discretization    = 16    
@@ -458,20 +458,33 @@ def _faraway(i:data, r1:row, region:rows) -> row:
 #--------- --------- --------- --------- --------- --------- --------- --------- --------
 # ## Regression
 def closestLeaf(node,lvl=0, test = [], data1=[]):
-  "Find the leaf that is most similar to thed common row"
+  "Find the leaf that has a closer distance to the common row"
   if not node.left and not node.right:
     return node.here.rows, sum(dists(data1,k,test) for k in node.here.rows)
-  if node.left: leftLeafRows, leftDistance = closestLeaf(node.left,lvl+1, test, data1)
-  if node.right: rightLeafRows, rightDistance = closestLeaf(node.right,lvl+1, test, data1)
+  if node.left: leftLeafRows, leftDistance = closestLeaf(node.left, lvl+1, test, data1)
+  if node.right: rightLeafRows, rightDistance = closestLeaf(node.right, lvl+1, test, data1)
   return (leftLeafRows, leftDistance) if (leftDistance < rightDistance) else (rightLeafRows,rightDistance)
+
+
+def probableLeaf(node,lvl=0, test = [], data1=[]):
+  "Find the leaf that is most probable to contain the common row"
+  if not node.left and not node.right:
+    return node.here.rows, loglikes(clone(data1, node.here.rows), test, len(node.here.rows), 2)
+  if node.left: leftLeafRows, leftProb = probableLeaf(node.left, lvl+1, test, data1)
+  if node.right: rightLeafRows, rightProb = probableLeaf(node.right, lvl+1, test, data1)
+  return (rightLeafRows,rightProb) if (leftProb < rightProb) else (leftLeafRows, leftProb)
+
 
 def predict(test1:rows, data1):
   preds = []
+  i = 0
+  clusters = dendogram(data1)
   for testRow in test1:
     coefs = []
-    neighbors = closestLeaf(dendogram(data1), 0, testRow, data1)[0]
+    #neighbors = closestLeaf(clusters, 0, testRow, data1)[0]
+    neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
     coefs.append([(1/(1E-30+dists(data1,n,testRow))) for n in neighbors])
-    
+    i+=1
     rowPreds = []
     for yCol in data1.cols.y:
       pred = 0
@@ -868,16 +881,30 @@ class eg:
     showDendo(d)
     print(mids(where(data1,d,row)))
 
+
   def regression():
     "Regression prediction"
-    data1 = DATA(csv(the.train))
-    random.shuffle(data1.rows)
-    trainSize = round(len(data1.rows)*0.7)
-    test1 = data1.rows[trainSize:]
-    data1.rows[trainSize:] = []
-    for yCol in data1.cols.y:
-      print(f"SMAPE Error for {yCol.txt}:")
-      print(smape([r[yCol.at-data1.cols.y[0].at] for r in predict(test1, data1)], [t[yCol.at] for t in test1]))
+    import time
+    st = time.time()
+    for i in range(20):
+      data1 = DATA(csv(the.train))
+      random.shuffle(data1.rows)
+      trainSize = round(len(data1.rows)*0.7)
+      test1 = data1.rows[trainSize:]
+      data1.rows[trainSize:] = []
+
+      predictions = predict(test1, data1)
+
+      if i==0:
+        for yCol in data1.cols.y:
+          print(f"{yCol.txt}, ", end='')
+        print()
+
+      for yCol in data1.cols.y:
+        print(smape([p[yCol.at-data1.cols.y[0].at] for p in predictions], [t[yCol.at] for t in test1]), end=',\t')
+      print()
+    print(round(time.time()-st,2), ',')
+
 
   def smo():
     "Optimize something."
@@ -1065,7 +1092,12 @@ def report(somes):
     print(all.bar(some,width=40,word="%20s", fmt="%5.2f"))
 #--------- --------- --------- --------- --------- --------- --------- --------- ---------
 
-if __name__ == "__main__": main()
+if __name__ == "__main__": #main()
+  import cProfile
+  import pstats
+  cProfile.run('main()' , '/tmp/out1')
+  p = pstats.Stats('/tmp/out1')
+  p.sort_stats('time').print_stats(20)
 
 # ## Conventions in this code
 
@@ -1093,4 +1125,3 @@ if __name__ == "__main__": main()
 #   Also,  if a function is about some data type, use `i` (not `self` and not `this`)
 #   for first function argument.
 #   And do not use `i` otherwise (e.g. not as a loop counter).
-
