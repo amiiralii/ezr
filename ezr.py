@@ -1092,12 +1092,13 @@ def report(somes):
     print(all.bar(some,width=40,word="%20s", fmt="%5.2f"))
 #--------- --------- --------- --------- --------- --------- --------- --------- ---------
 
-if __name__ == "__main__": #main()
-  import cProfile
-  import pstats
-  cProfile.run('main()' , '/tmp/out1')
-  p = pstats.Stats('/tmp/out1')
-  p.sort_stats('time').print_stats(20)
+if __name__ == "__main__": main()
+  # Profiling Notes:
+  #import cProfile
+  #import pstats
+  #cProfile.run('main()' , '/tmp/out1')
+  #p = pstats.Stats('/tmp/out1')
+  #p.sort_stats('time').print_stats(20)
 
 # ## Conventions in this code
 
