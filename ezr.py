@@ -477,14 +477,12 @@ def probableLeaf(node,lvl=0, test = [], data1=[]):
 
 def predict(test1:rows, data1):
   preds = []
-  i = 0
   clusters = dendogram(data1)
   for testRow in test1:
     coefs = []
     #neighbors = closestLeaf(clusters, 0, testRow, data1)[0]
     neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
     coefs.append([(1/(1E-30+dists(data1,n,testRow))) for n in neighbors])
-    i+=1
     rowPreds = []
     for yCol in data1.cols.y:
       pred = 0
@@ -493,7 +491,6 @@ def predict(test1:rows, data1):
       pred /= sum(coefs[0])
       rowPreds.append(round(pred,1))
     preds.append(rowPreds)
-  
   return preds
 
 def smape(acts:rows, preds:rows):
