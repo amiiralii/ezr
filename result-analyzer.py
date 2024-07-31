@@ -12,25 +12,38 @@ def csv_to_dict(file_path):
         # Populating the dictionary with data from each row
         for row in csv_reader:
             for key, value in zip(keys, row):
-                data_dict[key].append(float(str.strip(value)))
+                try:
+                    data_dict[key].append(float(str.strip(value)))
+                except:
+                    pass
     
     return data_dict
 
-# Example usage:
-file_path = 'reg-dists.csv'
-result_reg = csv_to_dict(file_path)
+def changeOrder(results):
+    columnOrdered = {}
+    for treatmentKey,treatres in results.items():
+        for col,res in treatres.items():
+            try:
+                columnOrdered[col].update({treatmentKey:res})
+            except:
+                columnOrdered[col] = {treatmentKey:res}
 
-file_path = 'lr.csv'
-result_lr = csv_to_dict(file_path)
+    return columnOrdered
 
-file_path = 'reg-loglike.csv'
-result_reg2 = csv_to_dict(file_path)
 
-for i,j in result_reg.items():
-    a = {}
-    a['reg-dists'] = j
-    a['lr'] = result_lr[i]
-    a['reg-loglike'] = result_reg2[i]
-    print(f"For Column {i}")
-    Rx.show(Rx.sk(Rx.data(**a)))
-    print('\n\n')
+
+import os
+
+resultLists = {}
+for filename in os.listdir('reg results/'):
+    if filename[-4:]=='.csv':
+        resultLists[filename[:-4]] = csv_to_dict('reg results/'+filename)
+
+results = changeOrder(resultLists)
+for col,res in results.items():
+    if col != 'time':
+        print(f"For Column {col}")
+        Rx.show(Rx.sk(Rx.data(**res)))
+        print('\n\n')
+    else:
+        [print(f"{t} : \t{time} seconds") for t,time in res.items()]
