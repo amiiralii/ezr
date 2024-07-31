@@ -475,18 +475,54 @@ def probableLeaf(node,lvl=0, test = [], data1=[]):
   return (rightLeafRows,rightProb) if (leftProb < rightProb) else (leftLeafRows, leftProb)
 
 
+def dataGeneration(data, num, k=5, r=2):
+    from sklearn.neighbors import NearestNeighbors
+    corpus = []
+    
+    for i in range(len(data)):
+      for j in range(len(data[i])):
+        if data[i][j] == '?':
+          if i!=0:
+            data[i][j] = data[i-1][j]
+          else:
+            data[i][j] = data[i+1][j]
+
+    nbrs = NearestNeighbors(n_neighbors=k, algorithm="ball_tree", p=r).fit(data)
+    _, indices = nbrs.kneighbors(data)
+    
+    for _ in range(0, num):
+        mid = random.randint(0, len(data) - 1)
+        nn = indices[mid, random.randint(1, k - 1)]
+        datamade = []
+        for j in range(0, len(data[mid])):
+            gap = random.random()
+            new_data_row = round( (data[nn][j] - data[mid][j]) * gap + data[mid][j],2)
+            if type(data[mid][j]) is int:
+                datamade.append(int(new_data_row))
+            else:
+                datamade.append(new_data_row)
+        corpus.append(datamade)
+        
+    return corpus
+
+
 def predict(test1:rows, data1):
   preds = []
   clusters = dendogram(data1)
+
   for testRow in test1:
     coefs = []
     #neighbors = closestLeaf(clusters, 0, testRow, data1)[0]
     neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
-    coefs.append([(1/(1E-30+dists(data1,n,testRow))) for n in neighbors])
+
+    #allNeighbors = neighbors
+    allNeighbors = neighbors + dataGeneration(neighbors, len(neighbors))
+
+    coefs.append([(1/(1E-30+dists(data1,n,testRow))) for n in allNeighbors])
     rowPreds = []
     for yCol in data1.cols.y:
       pred = 0
-      for c, n in zip(coefs[0], neighbors):
+      for c, n in zip(coefs[0], allNeighbors):
         pred += n[yCol.at] * c
       pred /= sum(coefs[0])
       rowPreds.append(round(pred,1))
@@ -895,12 +931,14 @@ class eg:
       if i==0:
         for yCol in data1.cols.y:
           print(f"{yCol.txt}, ", end='')
-        print()
+        print("time")
 
       for yCol in data1.cols.y:
-        print(smape([p[yCol.at-data1.cols.y[0].at] for p in predictions], [t[yCol.at] for t in test1]), end=',\t')
+        print(smape([p[yCol.at-data1.cols.y[0].at] for p in predictions], [t[yCol.at] for t in test1]), end='')
+        if yCol != data1.cols.y[-1]:
+          print(',\t', end='')
       print()
-    print(round(time.time()-st,2), ',')
+    print( ','*len(data1.cols.y),round(time.time()-st,2))
 
 
   def smo():
