@@ -35,9 +35,9 @@ def changeOrder(results):
 import os
 
 resultLists = {}
-for filename in os.listdir('reg results/'):
+for filename in os.listdir('reg results/wine_quality/'):
     if filename[-4:]=='.csv':
-        resultLists[filename[:-4]] = csv_to_dict('reg results/'+filename)
+        resultLists[filename[:-4]] = csv_to_dict('reg results/wine_quality/'+filename)
 
 results = changeOrder(resultLists)
 for col,res in results.items():

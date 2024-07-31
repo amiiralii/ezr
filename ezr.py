@@ -22,7 +22,7 @@
       -p --p       distance function coefficient  = 2    
       -R --Run     start up action method         = help    
       -s --seed    random number seed             = 1234567891    
-      -t --train   training data                  = data/misc/auto93.csv
+      -t --train   training data                  = data/misc/Wine_quality.csv
       -T --test    test data (defaults to train)  = None  
       -v --version show version                   = False   
       -x --xys     max #bins in discretization    = 16    
@@ -506,18 +506,16 @@ def dataGeneration(data, num, k=5, r=2):
         
     return corpus
 
-
 def predict(test1:rows, data1):
   preds = []
   clusters = dendogram(data1)
-
   for testRow in test1:
     coefs = []
-    neighbors = closestLeaf(clusters, 0, testRow, data1)[0]
-    #neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
+    #neighbors = closestLeaf(clusters, 0, testRow, data1)[0]
+    neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
 
-    allNeighbors = neighbors
-    #allNeighbors = neighbors + dataGeneration(neighbors, len(neighbors))
+    #allNeighbors = neighbors
+    allNeighbors = neighbors + dataGeneration(neighbors, len(neighbors))
 
     coefs.append([(1/(1E-30+dists(data1,n,testRow))) for n in allNeighbors])
     rowPreds = []
