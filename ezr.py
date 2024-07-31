@@ -513,11 +513,11 @@ def predict(test1:rows, data1):
 
   for testRow in test1:
     coefs = []
-    #neighbors = closestLeaf(clusters, 0, testRow, data1)[0]
-    neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
+    neighbors = closestLeaf(clusters, 0, testRow, data1)[0]
+    #neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
 
-    #allNeighbors = neighbors
-    allNeighbors = neighbors + dataGeneration(neighbors, len(neighbors))
+    allNeighbors = neighbors
+    #allNeighbors = neighbors + dataGeneration(neighbors, len(neighbors))
 
     coefs.append([(1/(1E-30+dists(data1,n,testRow))) for n in allNeighbors])
     rowPreds = []
@@ -530,8 +530,8 @@ def predict(test1:rows, data1):
     preds.append(rowPreds)
   return preds
 
-def smape(acts:rows, preds:rows):
-  return round( sum( [ ( abs(predicted - actual) / ((abs(predicted) + abs(actual))/2) ) 
+def mape(acts:rows, preds:rows):
+  return round( sum( [ ( abs(predicted - actual) / abs(actual) ) 
               for actual,predicted in zip(acts, preds) ] ) / len(acts) , 3)
 
 #--------- --------- --------- --------- --------- --------- --------- --------- --------
@@ -935,7 +935,7 @@ class eg:
         print("time")
 
       for yCol in data1.cols.y:
-        print(smape([p[yCol.at-data1.cols.y[0].at] for p in predictions], [t[yCol.at] for t in test1]), end='')
+        print(mape([p[yCol.at-data1.cols.y[0].at] for p in predictions], [t[yCol.at] for t in test1]), end='')
         if yCol != data1.cols.y[-1]:
           print(',\t', end='')
       print()
