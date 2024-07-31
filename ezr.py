@@ -923,7 +923,7 @@ class eg:
     for i in range(20):
       data1 = DATA(csv(the.train))
       random.shuffle(data1.rows)
-      trainSize = round(len(data1.rows)*0.7)
+      trainSize = round(len(data1.rows)*0.8)
       test1 = data1.rows[trainSize:]
       data1.rows[trainSize:] = []
 
