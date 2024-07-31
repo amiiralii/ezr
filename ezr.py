@@ -402,7 +402,8 @@ def where(i:data, dendo, row):
 
 def dendogram(i:data, region:rows=None, stop=None, before=None):
   region = region or i.rows
-  stop = stop or 2*len(region)**the.N
+  #stop = stop or 2*len(region)**the.N
+  stop = stop or 12
   node = o(this="dendogram",here=clone(i,region),
            reference=None, enough=0,
            left=None,right=None)
