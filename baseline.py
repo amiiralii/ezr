@@ -10,15 +10,18 @@ def mape(y_true, y_pred):
 
 # Load the dataset
 df = pd.read_csv('data/misc/Wine_quality.csv')
-for i in ['Alcohol-', 'Quality+']:
+df_y = [c for c in df.columns if (c[-1] == '-' or c[-1] == '+')]
+
+for i in df_y:
     print(i,end=',\t')
 print('time')
 
 st = time.time()
 for _ in range(20):
     df = pd.read_csv('data/misc/Wine_quality.csv')
-    for target_column in ['Alcohol-','Quality+']:
-        X = df.drop(columns=['Alcohol-', 'Quality+'])
+    df_y = [c for c in df.columns if (c[-1] == '-' or c[-1] == '+')]
+    X = df[[c for c in df.columns if (c[-1] != '-' and c[-1] != '+')]]
+    for target_column in df_y:
         y = df[target_column]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=int(100*random.random()))
 
@@ -28,7 +31,8 @@ for _ in range(20):
 
         # Evaluate the model with MAPE
         print(f'{round(mape(y_test, y_pred),3)}', end='')
-        if target_column != 'Quality+':
+        if target_column != df_y[-1]:
             print(',\t', end='')
     print()
-print(',,,',round(time.time()-st,2))
+
+print( (len(df_y)) * ',',round(time.time()-st,2))
