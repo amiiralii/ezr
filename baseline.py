@@ -6,6 +6,7 @@ import lightgbm as lgb
 import random
 import time
 import csv
+import os
 
 def mape(y_true, y_pred):
     return np.mean( np.abs(y_pred - y_true) / np.abs(y_true))
@@ -29,7 +30,12 @@ def lightgbm(X_train, y_train, X_test):
     return gbm.predict(X_test, num_iteration=gbm.best_iteration)
 
 def export(df_y, results, time, dataset, algo):
-    with open(f'reg results/{algo}-{dataset.split('/')[-1]}', 'w', newline='') as f:    
+    try:
+        os.mkdir(f'reg results/o{dataset.split('/')[-1][:-4]}/')
+    except:
+        pass
+
+    with open(f'reg results/o{dataset.split('/')[-1][:-4]}/{algo}-{dataset.split('/')[-1]}', 'w', newline='') as f:    
         write = csv.writer(f)
         df_y.append('Time')
         write.writerow([y for y in df_y])
