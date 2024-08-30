@@ -31,11 +31,11 @@ def lightgbm(X_train, y_train, X_test):
 
 def export(df_y, results, time, dataset, algo):
     try:
-        os.mkdir(f'reg results/o{dataset.split('/')[-1][:-4]}/')
+        os.mkdir(dataset.replace('data', 'results')[:-4])
     except:
         pass
 
-    with open(f'reg results/o{dataset.split('/')[-1][:-4]}/{algo}-{dataset.split('/')[-1]}', 'w', newline='') as f:    
+    with open(f'{dataset.replace('data', 'results')[:-4]}/{algo}-{dataset.split('/')[-1]}', 'w', newline='') as f:    
         write = csv.writer(f)
         df_y.append('Time')
         write.writerow([y for y in df_y])
@@ -51,7 +51,9 @@ def calc_baseline(algo, dataset):
     for _ in range(20):
         df = pd.read_csv(dataset)
         df_y = [c for c in df.columns if (c[-1] == '-' or c[-1] == '+')]
-        X = df[[c for c in df.columns if (c[-1] != '-' and c[-1] != '+')]]
+        X = df[[c for c in df.columns if (c[-1] != '-' and c[-1] != '+' and c[-1] != 'X')]]
+        X = pd.get_dummies(df, columns=[c for c in df.columns if c[0].islower], drop_first=False)
+
         res = []
         for target_column in df_y:
             y = df[target_column]
@@ -68,5 +70,6 @@ def calc_baseline(algo, dataset):
     export(df_y, results , round(time.time()-st,2), dataset, algo)
 
 
-calc_baseline('linear', 'data/misc/Wine_quality.csv')
-calc_baseline('lightgbm', 'data/misc/Wine_quality.csv')
+#print("started.")
+#calc_baseline('linear', 'data/hpo/healthCloseIsses12mths0001-hard.csv')
+#calc_baseline('lightgbm', 'data/hpo/healthCloseIsses12mths0001-hard.csv')

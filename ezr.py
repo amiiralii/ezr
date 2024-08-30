@@ -402,8 +402,8 @@ def where(i:data, dendo, row):
 
 def dendogram(i:data, region:rows=None, stop=None, before=None):
   region = region or i.rows
-  #stop = stop or 2*len(region)**the.N
-  stop = stop or 12
+  stop = stop or 2*len(region)**the.N
+  #stop = stop or 12
   node = o(this="dendogram",here=clone(i,region),
            reference=None, enough=0,
            left=None,right=None)
@@ -413,7 +413,7 @@ def dendogram(i:data, region:rows=None, stop=None, before=None):
     node.reference=right
     node.left=dendogram(i,lefts, stop, left)
     node.right=dendogram(i,rights,stop, right) 
-  return node 
+  return node
 
 def showDendo(node,lvl=0):
     print(("|.. "*lvl) + str( len(node.here.rows)),end="")
@@ -506,16 +506,22 @@ def dataGeneration(data, num, k=5, r=2):
         
     return corpus
 
-def predict(test1:rows, data1):
+
+def predict(test1:rows, data1, setting):
   preds = []
   clusters = dendogram(data1)
   for testRow in test1:
     coefs = []
-    #neighbors = closestLeaf(clusters, 0, testRow, data1)[0]
-    neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
 
-    #allNeighbors = neighbors
-    allNeighbors = neighbors + dataGeneration(neighbors, len(neighbors))
+    if setting == 0:
+      neighbors = closestLeaf(clusters, 0, testRow, data1)[0]
+      allNeighbors = neighbors
+    if setting == 1:
+      neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
+      allNeighbors = neighbors
+    if setting == 2:
+      neighbors = probableLeaf(clusters, 0, testRow, data1)[0]
+      allNeighbors = neighbors + dataGeneration(neighbors, len(neighbors))
 
     coefs.append([(1/(1E-30+dists(data1,n,testRow))) for n in allNeighbors])
     rowPreds = []
@@ -528,8 +534,9 @@ def predict(test1:rows, data1):
     preds.append(rowPreds)
   return preds
 
+
 def mape(acts:rows, preds:rows):
-  return round( sum( [ ( abs(predicted - actual) / abs(actual) ) 
+  return round( sum( [ ( abs(predicted - actual) / (abs(actual)+1E+30) ) 
               for actual,predicted in zip(acts, preds) ] ) / len(acts) , 3)
 
 #--------- --------- --------- --------- --------- --------- --------- --------- --------
@@ -914,31 +921,28 @@ class eg:
     print(mids(where(data1,d,row)))
 
 
-  def regression():
+  def regression(filename, setting):
     "Regression prediction"
     import time
     st = time.time()
+    results = []
     for i in range(20):
-      data1 = DATA(csv(the.train))
+      data1 = DATA(csv(filename))
+      if len(data1.rows) > 10000:
+        data1.rows = random.choices(data1.rows, k=round(len(data1.rows)*0.1))
       random.shuffle(data1.rows)
       trainSize = round(len(data1.rows)*0.8)
       test1 = data1.rows[trainSize:]
       data1.rows[trainSize:] = []
 
-      predictions = predict(test1, data1)
+      predictions = predict(test1, data1, setting)
 
-      if i==0:
-        for yCol in data1.cols.y:
-          print(f"{yCol.txt}, ", end='')
-        print("time")
-
+      res = []
       for yCol in data1.cols.y:
-        print(mape([p[yCol.at-data1.cols.y[0].at] for p in predictions], [t[yCol.at] for t in test1]), end='')
-        if yCol != data1.cols.y[-1]:
-          print(',\t', end='')
-      print()
-    print( ','*len(data1.cols.y),round(time.time()-st,2))
+        res.append(round(mape([p[yCol.at-data1.cols.y[0].at] for p in predictions], [t[yCol.at] for t in test1]),3))
+      results.append(res)
 
+    return [yCol.txt for yCol in data1.cols.y], results, round(time.time()-st,2)
 
   def smo():
     "Optimize something."
