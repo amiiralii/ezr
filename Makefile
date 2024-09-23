@@ -9,8 +9,8 @@ MAKEFLAGS += --warn-undefined-variables
 .SILENT:
 
 Top=$(shell git rev-parse --show-toplevel)
-Data ?= $(Top)/data/optimize
-Tmp  ?= $(HOME)/tmp
+Data ?= $(PWD)/data/optimize
+Tmp  ?= $(PWD)/tmp
 
 help      :  ## show help
 	gawk -f $(Top)/etc/help.awk $(MAKEFILE_LIST) 
@@ -20,7 +20,7 @@ pull    : ## download
 
 push    : ## save
 	echo -en "\033[33mWhy this push? \033[0m"; read x; git commit -am "$$x"; git push; git status
-
+	
 $(Top)/docs/%.pdf: %.py  ## make doco: .py ==> .pdf
 	mkdir -p ~/tmp
 	echo "pdf-ing $@ ... "
@@ -52,23 +52,23 @@ docs/%.html : %.py etc/py2html.awk etc/b4.html docs/ezr.css Makefile ## make doc
 	gawk -f etc/py2html.awk $< \
 	| pandoc -s  -f markdown --number-sections --toc --toc-depth=5 \
 					-B etc/b4.html --mathjax \
-  		     --css ezr.css --highlight-style tango \
+  		     --css ezr.css --highlight-style monochrome \
 					 --metadata title="$<" \
 	  			 -o $@ 
-
-# another commaned
-Out=$(HOME)/tmp
+# another command
+Out=$(PWD)/tmp
 Act ?= _mqs
+
 acts: ## experiment: mqs
-	mkdir -p ~/tmp
-	$(MAKE)  actb4  > $(Tmp)/$(Act).sh
-	bash $(Tmp)/$(Act).sh
+	mkdir -p $(Out)
+	$(MAKE) actb4 > $(Out)/$(Act).sh
+	bash $(Out)/$(Act).sh
 
 actb4: ## experiment: mqs
 	mkdir -p $(Out)/$(Act)
-	$(foreach d, config hpo misc process,         \
-		$(foreach f, $(wildcard $(Data)/$d/*.csv),   \
-				echo "python3 $(PWD)/ezr.py  -t $f -e $(Act)  | tee $(Out)/$(Act)/$(shell basename $f) & "; ))
+	$(foreach d, config hpo misc process, \
+		$(foreach f, $(wildcard $(Data)/$d/*.csv), \
+			echo "python3.13 $(PWD)/ezr.py -t $f -e $(Act) | tee $(Out)/$(Act)/$(shell basename $f) & "; ))
 
 fred:
 	echo $x
